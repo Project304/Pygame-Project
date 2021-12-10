@@ -12,12 +12,12 @@ from gameRole import *
 import random
 
 
-# 初始化游戏
+
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('BerkiboGame')
 
-# 载入游戏音乐
+
 bullet_sound = pygame.mixer.Sound('resources/sound/bullet.wav')
 enemy1_down_sound = pygame.mixer.Sound('resources/sound/enemy1_down.wav')
 game_over_sound = pygame.mixer.Sound('resources/sound/game_over.wav')
@@ -28,29 +28,29 @@ pygame.mixer.music.load('resources/sound/game_music.wav')
 pygame.mixer.music.play(-1, 0.0)
 pygame.mixer.music.set_volume(0.25)
 
-# 载入背景图
+
 background = pygame.image.load('resources/image/background.png').convert()
 game_over = pygame.image.load('resources/image/gameover.png')
 
 filename = 'resources/image/shoot.png'
 plane_img = pygame.image.load(filename)
 
-# 设置玩家相关参数
-player_rect = []
-player_rect.append(pygame.Rect(0, 99, 102, 126))        # 玩家精灵图片区域
+
+player_rect = []   
+player_rect.append(pygame.Rect(0, 99, 102, 126))        
 player_rect.append(pygame.Rect(165, 360, 102, 126))
-player_rect.append(pygame.Rect(165, 234, 102, 126))     # 玩家爆炸精灵图片区域
+player_rect.append(pygame.Rect(165, 234, 102, 126))     
 player_rect.append(pygame.Rect(330, 624, 102, 126))
 player_rect.append(pygame.Rect(330, 498, 102, 126))
 player_rect.append(pygame.Rect(432, 624, 102, 126))
-player_pos = [200, 600]
+player_pos = [200, 600]    #Oyuncu pozisyonu
 player = Player(plane_img, player_rect, player_pos)
 
-# 定义子弹对象使用的surface相关参数
+
 bullet_rect = pygame.Rect(1004, 987, 9, 21)
 bullet_img = plane_img.subsurface(bullet_rect)
 
-# 定义敌机对象使用的surface相关参数
+
 enemy1_rect = pygame.Rect(534, 612, 57, 43)
 enemy1_img = plane_img.subsurface(enemy1_rect)
 enemy1_down_imgs = []
@@ -61,7 +61,7 @@ enemy1_down_imgs.append(plane_img.subsurface(pygame.Rect(930, 697, 57, 43)))
 
 enemies1 = pygame.sprite.Group()
 
-# 存储被击毁的飞机，用来渲染击毁精灵动画
+
 enemies_down = pygame.sprite.Group()
 
 shoot_frequency = 0
@@ -75,69 +75,72 @@ clock = pygame.time.Clock()
 
 running = True
 
-while running:
-    # 控制游戏最大帧率为60
-    clock.tick(45)
+while running: #running true olduğu sürece oyun işleyecek
+    
+    
+    clock.tick(45) # rectler 45 milisaniyede bir akacak
 
-    # 控制发射子弹频率,并发射子弹
+    key_pressed = pygame.key.get_pressed()   
     if not player.is_hit:
-        if shoot_frequency % 15 == 0:
-            bullet_sound.play()
-            player.shoot(bullet_img)
+        if shoot_frequency % 8 == 0:
+            if key_pressed[K_SPACE]:
+                bullet_sound.play()
+                player.shoot(bullet_img)
         shoot_frequency += 1
-        if shoot_frequency >= 15:
+        if shoot_frequency >= 8:
             shoot_frequency = 0
 
-    # 生成敌机
+    
     if enemy_frequency % 50 == 0:
         enemy1_pos = [random.randint(0, SCREEN_WIDTH - enemy1_rect.width), 0]
-        enemy1 = Enemy(enemy1_img, enemy1_down_imgs, enemy1_pos)
+        enemy1 = Enemy(enemy1_img, enemy1_down_imgs, enemy1_pos,((score*2)/10000)+2)
         enemies1.add(enemy1)
     enemy_frequency += 1
     if enemy_frequency >= 100:
         enemy_frequency = 0
 
-    # 移动子弹，若超出窗口范围则删除
+   ## mermiler dışarı cıkınca gösterme
     for bullet in player.bullets:
         bullet.move()
         if bullet.rect.bottom < 0:
             player.bullets.remove(bullet)
 
-    # 移动敌机，若超出窗口范围则删除
+    
     for enemy in enemies1:
         enemy.move()
-        # 判断玩家是否被击中
-        if pygame.sprite.collide_circle(enemy, player):
-            enemies_down.add(enemy)
+        
+        if pygame.sprite.collide_circle(enemy, player): ## oyuncu ile dusman arasında carpısma oldu mu
+            enemies_down.add(enemy) # olduysa oyunu bitir
             enemies1.remove(enemy)
             player.is_hit = True
             game_over_sound.play()
             break
-        if enemy.rect.top > SCREEN_HEIGHT:
+        if enemy.rect.top > SCREEN_HEIGHT: # dusman ekrandan cıkınca gosterme bir daha
             enemies1.remove(enemy)
 
-    # 将被击中的敌机对象添加到击毁敌机Group中，用来渲染击毁动画
-    enemies1_down = pygame.sprite.groupcollide(enemies1, player.bullets, 1, 1)
+    
+    enemies1_down = pygame.sprite.groupcollide(enemies1, player.bullets, 1, 1) ## mermi ile dusman carpısttı mı carpısanları bul 
     for enemy_down in enemies1_down:
-        enemies_down.add(enemy_down)
+        enemies_down.add(enemy_down)  ## vurulan  dusmanları vurulanlara ekle
 
-    # 绘制背景
-    screen.fill(0)
-    screen.blit(background, (0, 0))
+    
+    screen.fill(0)  # ekran rengi 
+    screen.blit(background, (0, 0)) #  ekran arkaplan resmi
 
-    # 绘制玩家飞机
+   
     if not player.is_hit:
         screen.blit(player.image[player.img_index], player.rect)
-        # 更换图片索引使飞机有动画效果
-        player.img_index = shoot_frequency // 8
+       # kullanıcı vurulmadığı surece gosterilecek oyuncu animasyonu
+        player.img_index = shoot_frequency // 8  # 0 ile 1 arasında deger alır
     else:
-        player.img_index = player_down_index // 8
+        # oyuncu vurulduysa vurulma animasypnu gosterilir
+        player.img_index = player_down_index // 8 # degeri 2 olur
         screen.blit(player.image[player.img_index], player.rect)
         player_down_index += 1
-        if player_down_index > 47:
+        if player_down_index > 47: ## 48 oldugunda animasyon tamamlanmıs olur dongu biter 
             running = False
 
-    # 绘制击毁动画
+    # score ile ilgili degisiklikler buradan yapılacak (incelemeye buradan devam)
     for enemy_down in enemies_down:
         if enemy_down.down_index == 0:
             enemy1_down_sound.play()
@@ -148,18 +151,18 @@ while running:
         screen.blit(enemy_down.down_imgs[enemy_down.down_index // 2], enemy_down.rect)
         enemy_down.down_index += 1
 
-    # 绘制子弹和敌机
+   
     player.bullets.draw(screen)
     enemies1.draw(screen)
 
-    # 绘制得分
+   
     score_font = pygame.font.Font(None, 36)
     score_text = score_font.render(str(score), True, (128, 128, 128))
     text_rect = score_text.get_rect()
     text_rect.topleft = [10, 10]
     screen.blit(score_text, text_rect)
 
-    # 更新屏幕
+   
     pygame.display.update()
 
     for event in pygame.event.get():
@@ -167,9 +170,9 @@ while running:
             pygame.quit()
             exit()
             
-    # 监听键盘事件
+
     key_pressed = pygame.key.get_pressed()
-    # 若玩家被击中，则无效
+
     if not player.is_hit:
         if key_pressed[K_w] or key_pressed[K_UP]:
             player.moveUp()
