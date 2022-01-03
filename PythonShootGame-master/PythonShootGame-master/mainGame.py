@@ -80,6 +80,7 @@ player_down_index = 16
 
 score = 0
 level = 1
+bullet_count=15
 enemy_speed= 2
 
 clock = pygame.time.Clock()
@@ -94,32 +95,32 @@ while running:
     key_pressed = pygame.key.get_pressed()   
     if not player.is_hit:
         if shoot_frequency % 8 == 0:
-            if key_pressed[K_SPACE]:
-                bullet_sound.play()
-                player.shoot(bullet_img)
+            if (bullet_count > 0):
+                if key_pressed[K_SPACE]:
+                    bullet_sound.play()
+                    player.shoot(bullet_img)
+                    bullet_count = bullet_count-1                    
         shoot_frequency += 1
         if shoot_frequency >= 8:
             shoot_frequency = 0
     
     level = int( score/10000 ) +1
     
+    
     if(level>=2):
         enemy_speed=((level*2000)/10000)+2
         
-    if(level>=4):
-        enemy_frequency_const=50
-
-
 
     if enemy_frequency % enemy_frequency_const == 0:
         enemy1_pos = [random.randint(0, SCREEN_WIDTH - enemy1_rect.width), 0]
         enemy1 = Enemy(enemy1_img, enemy1_down_imgs, enemy1_pos,enemy_speed)
         enemies1.add(enemy1)
+    
         if(level>=3):
             if enemy_shoot_frequency % 2 == 0:  
                 enemy_bullet_sound.play()
                 bullet = EnemyBullet(enemy_bullet_img, enemy1.rect.midbottom)
-                enemy_bullets.add(bullet) 
+                enemy_bullets.add(bullet)
             enemy_shoot_frequency += 1
             if enemy_shoot_frequency >= 2:
                 shoot_frequency = 0
@@ -127,6 +128,8 @@ while running:
     if enemy_frequency >= enemy_frequency_const:
         enemy_frequency = 0
 
+    if(level>=4):
+        enemy_frequency_const=50
 
     if(level>=5):
         if bomb_frequency % bomb_frequency_const == 0:
@@ -169,7 +172,8 @@ while running:
     
     enemies1_down = pygame.sprite.groupcollide(enemies1, player.bullets, 1, 1) 
     for enemy_down in enemies1_down:
-        enemies_down.add(enemy_down) 
+        enemies_down.add(enemy_down)
+        bullet_count+=2
     
     bombs1_down = pygame.sprite.groupcollide(bombs, player.bullets, 1, 1)
     for bomb_down in bombs1_down:
@@ -230,23 +234,30 @@ while running:
     score_font = pygame.font.Font(None, 36)
     score_text = score_font.render(str(score), True, (128, 128, 128))
     text_rect = score_text.get_rect()
-    text_rect.topleft = [10, 10]
+    text_rect.topleft = [10, 20]
     screen.blit(score_text, text_rect)
 
     level_font = pygame.font.Font(None, 36)
     level_str = "Level: " + str(level)
     level_text = level_font.render(level_str, True, (128, 128, 128))
     level_text_rect = level_text.get_rect()
-    level_text_rect.topright = [470, 10]
+    level_text_rect.topright = [470, 20]
     screen.blit(level_text, level_text_rect)
 
     enemy_speed_font = pygame.font.Font(None, 20)
     enemy_speed_str = "Speed of Enemies: " + str(enemy_speed)
     enemy_speed_text = enemy_speed_font.render(enemy_speed_str, True, (128, 128, 128))
     enemy_speed_text_rect = enemy_speed_text.get_rect()
-    enemy_speed_text_rect.bottomleft = [10, 790]
+    enemy_speed_text_rect.bottomleft = [10, 770]
     screen.blit(enemy_speed_text, enemy_speed_text_rect)
 
+    bullet_font = pygame.font.Font(None, 20)
+    bullet_str = "Bullet Count: " + str(bullet_count)
+    bullet_text = bullet_font.render(bullet_str, True, (128, 128, 128))
+    bullet_text_rect = enemy_speed_text.get_rect()
+    bullet_text_rect.topright = [500, 45]
+    screen.blit(bullet_text, bullet_text_rect)
+    
     pygame.display.update()
 
     for event in pygame.event.get():
